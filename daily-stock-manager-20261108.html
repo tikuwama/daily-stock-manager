@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f7f5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>日用品在庫管理</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--ink:#26332e;--muted:#78837d;--line:#e5eae6;--green:#277a58;--green-bg:#e8f3ed;--amber:#a86a12;--amber-bg:#fff3dc;--red:#b94b45;--red-bg:#fbe9e7;--shadow:0 3px 14px rgba(25,50,38,.06)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:rgba(246,247,245,.96);backdrop-filter:blur(12px);padding:calc(12px + env(safe-area-inset-top)) 16px 12px;border-bottom:1px solid var(--line)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px}.head h1{font-size:21px;margin:0;font-weight:750;letter-spacing:.02em}.add{border:0;background:var(--green);color:#fff;border-radius:12px;padding:11px 15px;font-size:14px;font-weight:700}
+main{max-width:720px;margin:auto;padding:16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}.stat b{display:block;font-size:23px}.stat span{font-size:11px;color:var(--muted)}
+.tabs{display:flex;background:#e9edea;border-radius:12px;padding:4px;margin-bottom:13px}.tab{flex:1;border:0;background:transparent;border-radius:9px;padding:10px 5px;color:var(--muted);font-weight:700;font-size:13px}.tab.active{background:#fff;color:var(--green);box-shadow:0 1px 4px #0001}
+.filters{display:flex;gap:8px;margin-bottom:14px}.filters input,.filters select{min-width:0;border:1px solid var(--line);background:#fff;border-radius:11px;padding:11px;font-size:14px;color:var(--ink)}.filters input{flex:1}.filters select{width:112px}
+.list{display:grid;gap:10px}.item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow)}.itemtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.name{font-size:16px;font-weight:750;line-height:1.35}.category{font-size:11px;color:var(--muted);margin-top:4px}.price{font-size:13px;font-weight:700;white-space:nowrap}.meta{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.55}.memo{font-size:12px;color:#59665f;margin-top:6px;white-space:pre-wrap}
+.statusrow{display:flex;gap:7px;margin-top:13px}.status{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 4px;font-size:12px;color:var(--muted);font-weight:700}.status.selected[data-s="ok"]{background:var(--green-bg);border-color:#b8d9c7;color:var(--green)}.status.selected[data-s="low"]{background:var(--amber-bg);border-color:#efd39e;color:var(--amber)}.status.selected[data-s="none"]{background:var(--red-bg);border-color:#edc0bc;color:var(--red)}
+.actions{display:flex;justify-content:flex-end;margin-top:9px}.edit{border:0;background:transparent;color:var(--green);font-weight:700;padding:6px 2px;font-size:13px}
+.empty{text-align:center;color:var(--muted);padding:36px 10px;font-size:14px}
+.bottom{position:fixed;z-index:4;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:12px}.bottom button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 13px;font-size:12px;color:var(--muted);font-weight:650}
+dialog{border:0;border-radius:20px;padding:0;width:min(92vw,480px);max-height:88vh;box-shadow:0 15px 50px #0003}dialog::backdrop{background:#17251dcc}.modal{padding:20px;overflow:auto;max-height:88vh}.modal h2{font-size:18px;margin:0 0 16px}.field{margin:12px 0}.field label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit;font-size:14px;background:#fff;color:var(--ink)}.field textarea{min-height:68px;resize:vertical}.modalbuttons{display:flex;gap:8px;margin-top:18px}.modalbuttons button{flex:1;border:0;border-radius:11px;padding:12px;font-weight:700;font-size:14px}.save{background:var(--green);color:white}.cancel{background:#edf0ed;color:var(--ink)}.delete{background:var(--red-bg);color:var(--red);margin-top:10px;width:100%;border:0;border-radius:10px;padding:10px;font-weight:700}
+@media(min-width:600px){main{padding:22px}.list{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><div class="head"><h1>日用品在庫管理</h1><button class="add" onclick="openForm()">＋ 商品を追加</button></div></header>
+<main>
+ <section class="stats">
+  <div class="stat"><b id="countAll">0</b><span>登録商品</span></div>
+  <div class="stat"><b id="countLow">0</b><span>残り1個</span></div>
+  <div class="stat"><b id="countNone">0</b><span>在庫なし</span></div>
+ </section>
+ <div class="tabs"><button class="tab active" id="tabAll" onclick="setTab('all')">すべて</button><button class="tab" id="tabBuy" onclick="setTab('buy')">買い物リスト</button></div>
+ <div class="filters"><input id="search" placeholder="商品名で検索" oninput="render()"><select id="categoryFilter" onchange="render()"><option value="">すべての分類</option></select></div>
+ <section class="list" id="items"></section>
+</main>
+<nav class="bottom">
+ <button onclick="exportCSV()">CSVを書き出す</button>
+ <button onclick="document.getElementById('csvFile').click()">CSVを読み込む</button>
+ <input id="csvFile" type="file" accept=".csv,text/csv" hidden onchange="importCSV(event)">
+</nav>
+<dialog id="formDialog"><form class="modal" id="itemForm" onsubmit="saveItem(event)">
+ <h2 id="formTitle">商品を追加</h2>
+ <input type="hidden" id="itemId">
+ <div class="field"><label for="name">商品名 *</label><input id="name" required maxlength="80" placeholder="例：トイレットペーパー"></div>
+ <div class="field"><label for="category">分類</label><input id="category" list="categories" placeholder="例：洗面・バス"><datalist id="categories"><option>キッチン</option><option>洗面・バス</option><option>洗濯</option><option>掃除</option><option>食品</option><option>その他</option></datalist></div>
+ <div class="field"><label for="status">在庫状況</label><select id="status"><option value="ok">余裕あり</option><option value="low">残り1個</option><option value="none">なし</option></select></div>
+ <div class="field"><label for="price">前回購入価格（円）</label><input id="price" type="number" min="0" step="1" inputmode="numeric" placeholder="例：498"></div>
+ <div class="field"><label for="shop">前回購入店</label><input id="shop" maxlength="80" placeholder="例：近所のスーパー"></div>
+ <div class="field"><label for="date">前回購入日</label><input id="date" type="date"></div>
+ <div class="field"><label for="memo">メモ</label><textarea id="memo" maxlength="500" placeholder="サイズ、メーカーなど"></textarea></div>
+ <div class="modalbuttons"><button type="button" class="cancel" onclick="closeForm()">キャンセル</button><button class="save" type="submit">保存する</button></div>
+ <button type="button" class="delete" id="deleteBtn" onclick="deleteItem()" hidden>この商品を削除</button>
+</form></dialog>
+<script>
+const KEY='daily-stock-manager-v1';
+let data=[],tab='all';
+try{data=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(data))data=[]}catch(e){data=[]}
+const $=id=>document.getElementById(id);
+const statusLabel={ok:'余裕あり',low:'残り1個',none:'なし'};
+function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function setTab(t){tab=t;$('tabAll').classList.toggle('active',t==='all');$('tabBuy').classList.toggle('active',t==='buy');render()}
+function render(){
+ $('countAll').textContent=data.length;$('countLow').textContent=data.filter(x=>x.status==='low').length;$('countNone').textContent=data.filter(x=>x.status==='none').length;
+ const cats=[...new Set(data.map(x=>x.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));const sel=$('categoryFilter'),old=sel.value;
+ sel.innerHTML='<option value="">すべての分類</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(cats.includes(old))sel.value=old;
+ const q=$('search').value.trim().toLowerCase(),cat=sel.value;
+ const rows=data.filter(x=>(tab==='all'||x.status!=='ok')&&(!q||x.name.toLowerCase().includes(q))&&(!cat||x.category===cat)).sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+ $('items').innerHTML=rows.length?rows.map(x=>`<article class="item">
+ <div class="itemtop"><div><div class="name">${esc(x.name)}</div><div class="category">${esc(x.category||'分類なし')}</div></div><div class="price">${x.price!==''&&x.price!=null?'¥'+Number(x.price).toLocaleString():'—'}</div></div>
+ <div class="meta">${x.shop?'購入店：'+esc(x.shop):''}${x.date?(x.shop?'　':'')+'購入日：'+esc(x.date):''}</div>${x.memo?`<div class="memo">${esc(x.memo)}</div>`:''}
+ <div class="statusrow">${[['ok','余裕あり'],['low','残り1個'],['none','なし']].map(([s,l])=>`<button class="status ${x.status===s?'selected':''}" data-s="${s}" onclick="changeStatus('${x.id}','${s}')">${l}</button>`).join('')}</div>
+ <div class="actions"><button class="edit" onclick="openForm('${x.id}')">編集する　›</button></div></article>`).join(''):'<div class="empty">'+(tab==='buy'?'買い物リストは空です。':'商品がまだ登録されていません。')+'</div>';
+}
+function openForm(id=''){
+ const x=data.find(a=>a.id===id);$('itemForm').reset();$('itemId').value=x?.id||'';$('formTitle').textContent=x?'商品を編集':'商品を追加';$('deleteBtn').hidden=!x;
+ ['name','category','status','price','shop','date','memo'].forEach(k=>$(k).value=x?.[k]??(k==='status'?'ok':''));
+ $('formDialog').showModal();
+}
+function closeForm(){$('formDialog').close()}
+function saveItem(e){e.preventDefault();const id=$('itemId').value;const x={id:id||String(Date.now())+'-'+Math.random().toString(36).slice(2,7),name:$('name').value.trim(),category:$('category').value.trim(),status:$('status').value,price:$('price').value,shop:$('shop').value.trim(),date:$('date').value,memo:$('memo').value.trim()};if(id){const i=data.findIndex(a=>a.id===id);if(i>=0)data[i]=x}else data.push(x);persist();closeForm();render()}
+function changeStatus(id,status){const x=data.find(a=>a.id===id);if(x){x.status=status;persist();render()}}
+function deleteItem(){const id=$('itemId').value;if(id&&confirm('この商品を削除しますか？')){data=data.filter(x=>x.id!==id);persist();closeForm();render()}}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function exportCSV(){const heads=['商品ID','商品名','分類','在庫状況','前回購入価格','前回購入店','前回購入日','メモ'];const rows=data.map(x=>[x.id,x.name,x.category,x.status,x.price,x.shop,x.date,x.memo]);const csv='\uFEFF'+[heads,...rows].map(r=>r.map(csvCell).join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='日用品在庫バックアップ.csv';a.click();URL.revokeObjectURL(url)}
+function parseCSV(text){const lines=[];let row=[],field='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else field+=c}else{if(c==='"')quoted=true;else if(c===','){row.push(field);field=''}else if(c==='\n'){row.push(field.replace(/\r$/,''));lines.push(row);row=[];field=''}else field+=c}}row.push(field.replace(/\r$/,''));if(row.length>1||row[0]!=='')lines.push(row);return lines}
+function importCSV(ev){const file=ev.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const rows=parseCSV(String(reader.result).replace(/^\uFEFF/,''));if(rows.length<1)throw Error('CSVが空です');const h=rows[0];const required=['商品ID','商品名','分類','在庫状況','前回購入価格','前回購入店','前回購入日','メモ'];const idx=required.map(k=>h.indexOf(k));if(idx.some(i=>i<0))throw Error('必要な列が見つかりません。アプリから書き出したCSVを選んでください。');const next=rows.slice(1).filter(r=>r.some(v=>v!=='')).map(r=>({id:r[idx[0]]||String(Date.now())+Math.random(),name:r[idx[1]]||'',category:r[idx[2]]||'',status:['ok','low','none'].includes(r[idx[3]])?r[idx[3]]:'ok',price:r[idx[4]]||'',shop:r[idx[5]]||'',date:r[idx[6]]||'',memo:r[idx[7]]||''}));if(next.some(x=>!x.name))throw Error('商品名が空の行があります');if(!confirm(next.length+'件の商品データで現在のデータを置き換えます。よろしいですか？'))return;data=next;persist();render();alert('CSVを読み込みました')}catch(err){alert('読み込みできませんでした：'+err.message)}finally{$('csvFile').value=''}};reader.readAsText(file,'UTF-8')}
+render();
+</script>
+</body>
+</html>
